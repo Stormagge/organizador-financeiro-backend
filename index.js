@@ -11,11 +11,14 @@ const PORT = process.env.PORT || 4000;
 // Configuração do Firebase Admin SDK
 try {
   let serviceAccount;
+  console.log('Ambiente:', process.env.NODE_ENV || 'development');
+  console.log('Variável FIREBASE_SERVICE_ACCOUNT existe?', !!process.env.FIREBASE_SERVICE_ACCOUNT);
+
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    // Railway/produção: carrega do env
     try {
+      // Railway/produção: carrega do env
       serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      console.log('Firebase Admin SDK inicializado a partir da variável de ambiente!');
+      console.log('Firebase Admin SDK: Credenciais carregadas da variável de ambiente');
     } catch (parseError) {
       console.error('Erro ao fazer parse do FIREBASE_SERVICE_ACCOUNT:', parseError);
       process.exit(1);
@@ -23,18 +26,25 @@ try {
   } else {
     try {
       // Local: carrega do arquivo
-      serviceAccount = require('./firebase-service-account.json');
-      console.log('Firebase Admin SDK inicializado a partir do arquivo local!');
+      const filePath = path.join(__dirname, 'firebase-service-account.json');
+      console.log('Tentando carregar arquivo:', filePath);
+      serviceAccount = require(filePath);
+      console.log('Firebase Admin SDK: Credenciais carregadas do arquivo local');
     } catch (fileError) {
-      console.error('Erro ao carregar arquivo firebase-service-account.json:', fileError);
+      console.error('Erro ao carregar arquivo de credenciais:', fileError);
       process.exit(1);
     }
+  }
+
+  // Validação básica das credenciais
+  if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+    throw new Error('Credenciais do Firebase inválidas ou incompletas');
   }
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
-  console.log('Firebase Admin SDK inicializado com sucesso!');
+  console.log('Firebase Admin SDK inicializado com sucesso! Project ID:', serviceAccount.project_id);
 } catch (error) {
   console.error('Erro ao inicializar Firebase Admin SDK:', error);
   process.exit(1);
