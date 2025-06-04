@@ -46,6 +46,26 @@ app.get('/', (req, res) => {
   });
 });
 
+// Secure endpoint that requires authentication
+app.get('/secure', firebaseAuth, (req, res) => {
+  console.log('[GET /secure] Acesso autorizado para UID:', req.firebaseUid);
+  res.json({
+    message: 'Acesso autorizado! Este é um endpoint protegido.',
+    user: {
+      uid: req.firebaseUid,
+      email: req.firebaseEmail
+    },
+    timestamp: new Date().toISOString(),
+    data: {
+      secretMessage: 'Parabéns! Você está autenticado com Firebase JWT.',
+      serverInfo: {
+        environment: process.env.NODE_ENV || 'development',
+        port: PORT
+      }
+    }
+  });
+});
+
 // Configurar diretório do banco de dados
 const dbPath = process.env.NODE_ENV === 'production' 
   ? path.join(__dirname, 'data', 'database.sqlite')
