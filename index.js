@@ -10,7 +10,27 @@ const PORT = process.env.PORT || 4000;
 
 // Configuração do Firebase Admin SDK
 try {
-  const serviceAccount = require('./firebase-service-account.json');
+  let serviceAccount;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // Railway/produção: carrega do env
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      console.log('Firebase Admin SDK inicializado a partir da variável de ambiente!');
+    } catch (parseError) {
+      console.error('Erro ao fazer parse do FIREBASE_SERVICE_ACCOUNT:', parseError);
+      process.exit(1);
+    }
+  } else {
+    try {
+      // Local: carrega do arquivo
+      serviceAccount = require('./firebase-service-account.json');
+      console.log('Firebase Admin SDK inicializado a partir do arquivo local!');
+    } catch (fileError) {
+      console.error('Erro ao carregar arquivo firebase-service-account.json:', fileError);
+      process.exit(1);
+    }
+  }
+
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
